@@ -23,8 +23,8 @@ case class MultiServiceImpl(
     validator.findType(typ).headOption
   }
 
-  override def upcast(typ: ApiBuilderType, js: JsValue): Either[Seq[String], JsValue] = {
-    validator.validateType(typ, js)
+  override def upcast(typ: String, defaultNamespace: String, js: JsValue): Either[Seq[String], JsValue] = {
+    validator.validate(typ, js, Some(defaultNamespace))
   }
 
 }

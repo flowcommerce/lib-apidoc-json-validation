@@ -168,4 +168,14 @@ class MultiServiceImplSpec extends AnyFunSpec with Matchers with Helpers {
     )
   }
 
+  it("validates array types") {
+    multi.upcastOperationBody(
+      "PUT",
+      "/:organization/experiences/:experience_key/payment/method/rules",
+      Json.obj()
+    ) should equal(
+      Left(Seq("Missing required fields for experience_payment_method_rule_form: payment_method_id, tags"))
+    )
+  }
+
 }

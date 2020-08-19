@@ -25,13 +25,9 @@ class EnumValuesSpec extends AnyFunSpec with Matchers with helpers.Helpers {
   }
 
   it("serialize enums with values") {
-    val fraudReview = flowMultiService.findType(
-      "io.flow.internal.v0", "fraud_review"
-    ).get
-
     def assertValid(value: String) = {
       rightOrErrors {
-        flowMultiService.upcast(fraudReview, makeFraudReview(value))
+        flowMultiService.upcast("fraud_review", "io.flow.internal.v0", makeFraudReview(value))
       }
     }
     assertValid("Low-Risk") // use enum_value.value

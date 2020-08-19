@@ -35,9 +35,8 @@ class SerializationSpec extends AnyFunSpec with Matchers with helpers.Helpers {
 
     val deserializedForm = rightOrErrors {
       flowMultiService.upcast(
-        flowMultiService.findType("io.flow.v0", "item_form").getOrElse {
-          sys.error("Could not find type")
-        },
+        "item_form",
+        "io.flow.v0",
         FormData.toJson(
           FormData.parseEncoded(encoded)
         )

@@ -24,7 +24,7 @@ trait MultiService extends ResponseHelpers {
   /**
     * Upcast the json value based on the specified type name, if it is defined. a No-op if not
     */
-  def upcast(typ: ApiBuilderType, js: JsValue): Either[Seq[String], JsValue]
+  def upcast(typ: String, defaultNamespace: String, js: JsValue): Either[Seq[String], JsValue]
 
   final def findOperation(method: String, path: String): Option[ApiBuilderOperation] = {
     findOperation(Method(method), path)
@@ -62,9 +62,9 @@ trait MultiService extends ResponseHelpers {
     * match the request method/path as needed.
     */
   final def upcast(apiBuilderOperation: ApiBuilderOperation, js: JsValue): Either[Seq[String], JsValue] = {
-    findBodyType(apiBuilderOperation) match {
-      case None => Right(js)
-      case Some(bodyType) => upcast(bodyType, js)
+    getBodyType(apiBuilderOperation) match {
+      case None => println("not found"); Right(js)
+      case Some((namespace, bodyType)) => upcast(bodyType, namespace, js)
     }
   }
 
@@ -77,6 +77,12 @@ trait MultiService extends ResponseHelpers {
     }
   }
 
+  final def getBodyType(operation: ApiBuilderOperation): Option[(String, String)] = {
+    for {
+      body <- operation.operation.body
+    } yield (operation.service.namespace, body.`type`)
+  }
+
   final def upcastOperationBody(method: String, path: String, js: JsValue): Either[Seq[String], JsValue] = {
     upcastOperationBody(Method(method), path, js)
   }
@@ -85,13 +91,6 @@ trait MultiService extends ResponseHelpers {
     validateOperation(method, path) match {
       case Left(errors) => Left(errors)
       case Right(op) => upcast(op, js)
-    }
-  }
-
-  final def upcastType(defaultNamespace: String, typeName: String, js: JsValue): Either[Seq[String], JsValue] = {
-    findType(defaultNamespace = defaultNamespace, typeName = typeName) match {
-      case None => Right(js)
-      case Some(t) => upcast(t, js)
     }
   }
 
