@@ -23,6 +23,7 @@ case class ApiBuilderService(
   val namespace: String = service.namespace
 
   final lazy val enums: Seq[ApiBuilderType.Enum] = service.enums.map { e => ApiBuilderType.Enum(this, e) }
+  final lazy val interfaces: Seq[ApiBuilderType.Interface] = service.interfaces.map { e => ApiBuilderType.Interface(this, e) }
   final lazy val models: Seq[ApiBuilderType.Model] = service.models.map { m => ApiBuilderType.Model(this, m) }
   final lazy val unions: Seq[ApiBuilderType.Union] = service.unions.map { u => ApiBuilderType.Union(this, u) }
 

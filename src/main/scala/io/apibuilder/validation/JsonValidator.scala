@@ -126,12 +126,14 @@ case class ValidatedJsonValidator(services: List[ApiBuilderService]) {
     )
   }
 
-  private[this] def findType(service: ApiBuilderService, typeName: String): Option[AnyType] = {
-    service.enums.find(_.name.equalsIgnoreCase(typeName)) orElse {
-      service.models.find(_.name.equalsIgnoreCase(typeName)) orElse {
-        service.unions.find(_.name.equalsIgnoreCase(typeName))
-      }
-    }
+  private[this] def findType(service: ApiBuilderService, typeName: String): Seq[AnyType] = {
+    service.enums.find(_.name.equalsIgnoreCase(typeName)).fold(
+      service.models.find(_.name.equalsIgnoreCase(typeName)).fold(
+        service.unions.find(_.name.equalsIgnoreCase(typeName)).fold(
+          service.interfaces.find(_.name.equalsIgnoreCase(typeName)).toSeq : Seq[AnyType]
+        )(Seq(_) ++ service.interfaces.find(_.name.equalsIgnoreCase(typeName)).toSeq)
+      )(Seq(_))
+    )(Seq(_))
   }
 
   /**
@@ -175,6 +177,10 @@ case class ValidatedJsonValidator(services: List[ApiBuilderService]) {
   ): ValidatedNec[String, JsValue] = {
     typ match {
       case st: ScalarType => validateScalar(prefix.getOrElse("value"), st, js)
+
+      case m: ApiBuilderType.Interface => {
+        toObject(prefix.getOrElse("Body"), js).andThen(validateInterface(m, _, prefix))
+      }
 
       case e: ApiBuilderType.Enum => {
         validateEnum(prefix.getOrElse("Body"), e, js)
@@ -228,6 +234,50 @@ case class ValidatedJsonValidator(services: List[ApiBuilderService]) {
           case Some(validValue) =>
             JsString(validValue).validNec
         }
+    }
+  }
+
+  private[this] def validateInterface(
+    typ: ApiBuilderType.Interface,
+    js: JsObject,
+    prefix: Option[String]
+  ): ValidatedNec[String, JsValue] = {
+
+    val missingFields = typ.fields.map(_.field).filter(_.required).filter { f =>
+      (js \ f.name).toOption.isEmpty
+    }.map(_.name).toList
+
+    val missingFieldsV = missingFields match {
+      case Nil => ().validNec[String]
+      case one :: Nil => s"Missing required field for ${typ.interface.name}: $one".invalidNec[Unit]
+      case multiple => (s"Missing required fields for ${typ.interface.name}: " + multiple.mkString(", ")).invalidNec[Unit]
+    }
+
+    val invalidTypesV: ValidatedNec[String, JsObject] = js.fields.foldLeft(Json.obj().validNec[String]) { case (agg, (name, value)) =>
+      typ.interface.fields.find(_.name == name) match {
+        case None => {
+          agg
+        }
+
+        case Some(f) => {
+          agg.andThen { agg =>
+            validate(
+              typeName = f.`type`,
+              js = value,
+              prefix = Some(
+                prefix.getOrElse(typ.interface.name) + s".${f.name}"
+              ),
+              defaultNamespace = Some(typ.service.namespace)
+            ).map { v =>
+              agg ++ Json.obj(name -> v)
+            }
+          }
+        }
+      }
+    }
+
+    (missingFieldsV, invalidTypesV).mapN { (_, updated) =>
+      js ++ updated
     }
   }
 

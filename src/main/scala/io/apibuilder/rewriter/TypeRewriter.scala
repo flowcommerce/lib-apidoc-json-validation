@@ -20,6 +20,7 @@ case class TypeRewriter(rewriteType: AnyType => AnyType) extends DefaultRewriter
     ApiBuilderService(
       service = service.service.copy(
         enums = service.enums.map { t => rewriteEnum(helper, t) }.map(_.`enum`),
+        interfaces = service.interfaces.map { t => rewriteInterface(helper, t) }.map(_.interface),
         models = service.models.map { t => rewriteModel(helper, t) }.map(_.model),
         unions = service.unions.map { t => rewriteUnion(helper, t) }.map(_.union),
         resources = service.service.resources.map { r => rewrite(helper, service, r) }
@@ -85,6 +86,20 @@ case class TypeRewriter(rewriteType: AnyType => AnyType) extends DefaultRewriter
     )
   }
 
+
+  private[this] def rewriteInterface(helper: ApiBuilderHelper, typ: ApiBuilderType.Interface): ApiBuilderType.Interface = {
+    ApiBuilderType.Interface(
+      typ.service,
+      typ.interface.copy(
+        name = doRewriteType(helper, typ.service, typ.interface.name),
+        fields = typ.fields.map { f =>
+          f.field.copy(
+            `type` = doRewriteType(helper, f.parent.service, f.field.`type`)
+          )
+        }
+      )
+    )
+  }
   private[this] def rewriteModel(helper: ApiBuilderHelper, typ: ApiBuilderType.Model): ApiBuilderType.Model = {
     ApiBuilderType.Model(
       typ.service,
@@ -92,7 +107,7 @@ case class TypeRewriter(rewriteType: AnyType => AnyType) extends DefaultRewriter
         name = doRewriteType(helper, typ.service, typ.model.name),
         fields = typ.fields.map { f =>
           f.field.copy(
-            `type` = doRewriteType(helper, f.model.service, f.field.`type`)
+            `type` = doRewriteType(helper, f.parent.service, f.field.`type`)
           )
         }
       )

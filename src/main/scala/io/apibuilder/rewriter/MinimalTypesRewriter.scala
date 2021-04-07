@@ -23,6 +23,7 @@ case class MinimalTypesRewriter(types: Iterable[ApiBuilderType]) extends Default
         s.copy(
           service = s.service.copy(
             enums = svcTypes.collect { case t: ApiBuilderType.Enum => t }.map(_.`enum`),
+            interfaces = svcTypes.collect { case t: ApiBuilderType.Interface => t }.map(_.interface),
             models = svcTypes.collect { case t: ApiBuilderType.Model => t }.map(_.model),
             unions = svcTypes.collect { case t: ApiBuilderType.Union => t }.map(_.union),
           )
@@ -42,6 +43,7 @@ case class MinimalTypesRewriter(types: Iterable[ApiBuilderType]) extends Default
       case one :: rest => {
         val newTypes = one match {
           case _: ApiBuilderType.Enum => Nil
+          case t: ApiBuilderType.Interface => t.fields.flatMap(helper.resolveType)
           case t: ApiBuilderType.Model => t.fields.flatMap(helper.resolveType)
           case t: ApiBuilderType.Union => t.types.flatMap(helper.resolveType)
         }

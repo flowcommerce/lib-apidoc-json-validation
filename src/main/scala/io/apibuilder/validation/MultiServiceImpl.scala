@@ -26,6 +26,13 @@ case class MultiServiceImpl(
     ).headOption
   }
 
+  override def findTypes(typ: TypeName): Seq[AnyType] = {
+    validator.findType(
+      defaultNamespace = typ.namespace,
+      name = typ.name,
+    )
+  }
+
   override def upcast(typ: AnyType, js: JsValue): Either[Seq[String], JsValue] = {
     validator.validateType(typ, js)
   }

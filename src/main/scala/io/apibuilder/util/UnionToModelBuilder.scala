@@ -144,6 +144,7 @@ case class UnionToModelBuilder(multiService: MultiService) {
       case Some(t) => {
         t match {
           case _: ScalarType => s"Type '${t.name}' is a scalar. A model is required".invalidNec
+          case _: ApiBuilderType.Interface  => s"Type '${t.name}' is an interface. A model is required".invalidNec
           case m: ApiBuilderType.Model => m.validNec
           case _: ApiBuilderType.Enum  => s"Type '${t.name}' is an enum. A model is required".invalidNec
           case _: ApiBuilderType.Union => s"Type '${t.name}' is a union. A model is required".invalidNec

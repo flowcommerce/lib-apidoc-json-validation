@@ -22,6 +22,11 @@ trait MultiService extends ResponseHelpers {
   def findType(typeName: TypeName): Option[AnyType]
 
   /**
+   * Resolves the types specified
+   */
+  def findTypes(typeName: TypeName): Seq[AnyType]
+
+  /**
     * Upcast the json value based on the specified type name, if it is defined. a No-op if not
     */
   def upcast(typ: AnyType, js: JsValue): Either[Seq[String], JsValue]
@@ -43,6 +48,17 @@ trait MultiService extends ResponseHelpers {
   final def findType(fullyQualifiedName: String): Option[AnyType] = {
     TypeName.parse(fullyQualifiedName).flatMap(findType) orElse {
       ScalarType.fromName(fullyQualifiedName)
+    }
+  }
+
+  final def findTypes(defaultNamespace: String, typeName: String): Seq[AnyType] = {
+    findTypes(TypeName.parse(name = typeName, defaultNamespace = defaultNamespace))
+  }
+
+  final def findTypes(fullyQualifiedName: String): Seq[AnyType] = {
+    TypeName.parse(fullyQualifiedName).toSeq.flatMap(findTypes) match {
+      case Nil => ScalarType.fromName(fullyQualifiedName).toSeq
+      case some => some
     }
   }
 
@@ -126,6 +142,8 @@ trait MultiService extends ResponseHelpers {
   }
 
   final val allEnums: Seq[ApiBuilderType.Enum] = services().flatMap(_.enums)
+
+  final val allInterfaces: Seq[ApiBuilderType.Interface] = services().flatMap(_.interfaces)
 
   final val allModels: Seq[ApiBuilderType.Model] = services().flatMap(_.models)
 

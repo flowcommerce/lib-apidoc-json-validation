@@ -57,6 +57,25 @@ trait MultiServiceBuilders {
     }
   }
 
+  def findInterface(apiBuilderService: ApiBuilderService, name: String): Option[ApiBuilderType.Interface] = {
+    findInterface(makeMultiService(apiBuilderService), name)
+  }
+
+  def findInterface(multiService: MultiService, name: String): Option[ApiBuilderType.Interface] = {
+    findApiBuilderType(multiService, name).collect { case t: ApiBuilderType.Interface => t }
+  }
+
+  def mustFindInterface(service: ApiBuilderService, name: String): ApiBuilderType.Interface = {
+    mustFindInterface(makeMultiService(service), name)
+  }
+
+  def mustFindInterface(multiService: MultiService, name: String): ApiBuilderType.Interface = {
+    mustFindApiBuilderType(multiService, name) match {
+      case t: ApiBuilderType.Interface => t
+      case _ => sys.error(s"Type '${name}' is not an interface")
+    }
+  }
+
   def findModel(apiBuilderService: ApiBuilderService, name: String): Option[ApiBuilderType.Model] = {
     findModel(makeMultiService(apiBuilderService), name)
   }

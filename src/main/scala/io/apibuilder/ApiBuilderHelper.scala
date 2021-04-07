@@ -23,6 +23,7 @@ object ApiBuilderHelper {
   def changeName(apiBuilderType: ApiBuilderType, name: String): ApiBuilderType = {
     apiBuilderType match {
       case t: ApiBuilderType.Enum => ApiBuilderType.Enum(t.service, t.`enum`.copy(name = name))
+      case t: ApiBuilderType.Interface => ApiBuilderType.Interface(t.service, t.interface.copy(name = name))
       case t: ApiBuilderType.Model => ApiBuilderType.Model(t.service, t.model.copy(name = name))
       case t: ApiBuilderType.Union => ApiBuilderType.Union(t.service, t.union.copy(name = name))
     }
@@ -41,7 +42,7 @@ trait ApiBuilderHelper {
     resolveType(service.service, typeName)
   }
 
-  def resolveType(field: ApiBuilderField): Option[AnyType] = resolveType(field.model.service, field.field.`type`)
+  def resolveType(field: ApiBuilderField): Option[AnyType] = resolveType(field.parent.service, field.field.`type`)
   def resolveType(unionType: ApiBuilderUnionType): Option[AnyType] = resolveType(unionType.union.service, unionType.`type`.`type`)
   def resolveType(service: Service, resource: Resource): Option[AnyType] = resolveType(service, resource.`type`)
   def resolveType(service: Service, body: Body): Option[AnyType] = resolveType(service, body.`type`)

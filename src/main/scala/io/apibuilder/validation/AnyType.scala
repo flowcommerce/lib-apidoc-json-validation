@@ -37,12 +37,13 @@ object ScalarType {
 sealed trait TypeDiscriminator
 object TypeDiscriminator {
   case object Enums extends TypeDiscriminator { override def toString = "enums" }
+  case object Interfaces extends TypeDiscriminator { override def toString = "interfaces" }
   case object Models extends TypeDiscriminator { override def toString = "models" }
   case object Unions extends TypeDiscriminator { override def toString = "unions" }
 }
 
 /**
- * Represents a union, model or enum
+ * Represents an interface, union, model or enum
  */
 sealed trait ApiBuilderType extends AnyType {
 
@@ -56,13 +57,20 @@ sealed trait ApiBuilderType extends AnyType {
   def qualified: String = s"$namespace.$typeDiscriminator.$name"
 }
 
-case class ApiBuilderField(model: ApiBuilderType.Model, field: Field)
+case class ApiBuilderField(parent: ApiBuilderType, field: Field)
 case class ApiBuilderUnionType(union: ApiBuilderType.Union, `type`: UnionType)
 
 object ApiBuilderType {
   case class Enum(override val service: ApiBuilderService, enum: models.Enum) extends ApiBuilderType {
     override val name: String = enum.name
     override val typeDiscriminator: TypeDiscriminator = TypeDiscriminator.Enums
+  }
+  case class Interface(override val service: ApiBuilderService, interface: models.Interface) extends ApiBuilderType {
+    override val name: String = interface.name
+    override val typeDiscriminator: TypeDiscriminator = TypeDiscriminator.Interfaces
+    val fields: Seq[ApiBuilderField] = interface.fields.map { f =>
+      ApiBuilderField(this, f)
+    }
   }
   case class Model(override val service: ApiBuilderService, model: models.Model) extends ApiBuilderType {
     override val name: String = model.name

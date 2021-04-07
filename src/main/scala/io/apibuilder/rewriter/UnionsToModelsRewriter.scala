@@ -23,9 +23,10 @@ object UnionsToModelsRewriter extends DefaultRewriter {
     val newTypes = service.unions.flatMap { u => rewrite(unionToModelBuilder, u) }
     service.copy(
       service = service.service.copy(
-        unions = newTypes.collect { case e: ApiBuilderType.Union => e.union },
         enums = service.service.enums ++ newTypes.collect { case e: ApiBuilderType.Enum => e.enum },
+        interfaces = service.service.interfaces ++ newTypes.collect { case m: ApiBuilderType.Interface => m.interface },
         models = service.service.models ++ newTypes.collect { case m: ApiBuilderType.Model => m.model },
+        unions = newTypes.collect { case e: ApiBuilderType.Union => e.union },
       )
     )
   }
